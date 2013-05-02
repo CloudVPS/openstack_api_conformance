@@ -10,8 +10,10 @@ class Test(unittest2.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['keystone']
-        if not cls.config.v1_url:
-            cls.skipTest("no v1 auth support for this setup")
+
+    def setUp(self):
+        if not self.config.v1_url:
+            self.skipTest("no v1 auth support for this setup")
 
     def test_withTenantId(self):
         response = requests.get(
