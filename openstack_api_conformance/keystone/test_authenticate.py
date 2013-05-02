@@ -23,15 +23,24 @@ class Test(unittest2.TestCase):
 
     def check_headers(self, headers):
         self.assertDictContainsSubset( {
-                'transfer-encoding': 'chunked',
+        #        'transfer-encoding': 'chunked',
                 'content-type': 'application/json',
                 'vary': 'X-Auth-Token',
             },
             headers)
 
+        header_names = set(headers.keys()) - set(("transfer-encoding", "content-length"))
+
         self.assertItemsEqual(
-            headers.keys(),
-            ['date', 'transfer-encoding', 'content-type', 'vary'])
+            header_names,
+            ['date', 'content-type', 'vary'])
+
+        if self.config.release == 'folsom':
+            self.assertEqual(headers.get("transfer-encoding"), "chunked")
+            self.assertNotIn('content-length', headers)
+        else:
+            self.assertNotIn('transfer-encoding', headers)
+            self.assertRegexpMatches(headers['content-length'], r'^\d+$')
 
         response_date = time.strptime(
             headers['date'],
@@ -46,9 +55,11 @@ class Test(unittest2.TestCase):
         self.assertIn('id', token)
         self.assertIn('expires', token)
 
-        # ver
-        keys = set(token) - set(('id', 'expires', 'tenant'))
-        self.assertItemsEqual(keys, [])
+        keys = set(token) - set([ 'tenant'])
+        if self.config.release == 'folsom':
+            self.assertItemsEqual(keys, ('id', 'expires'))
+        else:
+            self.assertItemsEqual(keys, ('id', 'expires', 'issued_at'))
 
         # Make sure the token expires 24h in the future.
         expires = time.strptime(token['expires'], '%Y-%m-%dT%H:%M:%SZ')
@@ -57,8 +68,14 @@ class Test(unittest2.TestCase):
         # tokens are valid for 24 hours
         self.assertAlmostEqual(time.time() + 3600*24, expires, delta=2)
 
-        # tokens
-        self.assertRegexpMatches(token['id'], r"^[a-f0-9]{32}$")
+        if self.config.release == 'folsom':
+            self.assertRegexpMatches(
+                token['id'],
+                r"^[a-f0-9]{32}$")
+        else:
+            self.assertRegexpMatches(
+                token['id'],
+                r"^[a-zA-Z0-9+-]{100,}={0,3}$")
 
         if 'tenant' in token:
             self.assertEqual(token['tenant']['id'], self.config.tenantId)
@@ -80,12 +97,20 @@ class Test(unittest2.TestCase):
             self.assertItemsEqual(role, ['name'])
 
     def check_catalog(self, catalog):
+        if self.config.release == 'folsom' and not catalog:
+            return # folsom is inconsistent with empty catalogs.
+
+        self.assertIsInstance(catalog, list)
+
         for service in catalog:
+            self.assertIsInstance(service, dict)
+
             self.assertItemsEqual(
                 service,
                 [u'endpoints_links', u'endpoints', u'type', u'name']
             )
             self.assertEqual(service['endpoints_links'], [])
+            self.assertIsInstance(service['endpoints'], list)
             for endpoint in service['endpoints']:
                 self.assertItemsEqual(
                     endpoint,
@@ -95,7 +120,7 @@ class Test(unittest2.TestCase):
                 for url in u'publicURL', u'internalURL': # u'adminURL'
                     self.assertRegexpMatches(
                         endpoint[url],
-                        r"^https?://[0-9a-z\.-]+\.[a-z\.]{2,6}(:\d+)?(/[A-Za-z0-9_\./]*)?$"
+                        r"^https?://([\d\.]+|[0-9a-z\.-]+\.[a-z\.]{2,6})(:\d+)?(/[A-Za-z0-9_\./]*)?$"
                     )
 
     def test_unbound(self):
@@ -111,17 +136,22 @@ class Test(unittest2.TestCase):
         # Check we got exactly the information one would expect from an unbound
         # token.
         self.assertItemsEqual(token, [u'access'] )
-        self.assertItemsEqual(
-            token['access'],
-            [u'token', u'user', u'serviceCatalog']
-        )
+
+        if self.config.release == 'grizzly':
+            self.assertItemsEqual(
+                token['access'],
+                [u'token', u'user', u'serviceCatalog', u'metadata'])
+        else:
+            self.assertItemsEqual(
+                token['access'],
+                [u'token', u'user', u'serviceCatalog'])
 
         self.check_token(token['access']['token'])
         self.check_user(token['access']['user'])
         self.check_catalog(token['access']['serviceCatalog'])
 
         # Unbound tokens should have an empty serviceCatalog
-        self.assertEqual(token['access']['serviceCatalog'], {} )
+        self.assertFalse(token['access']['serviceCatalog'])
 
         # Unbound tokens should not have a tenant linked to the token
         self.assertNotIn('tenant', token['access']['token'] )
