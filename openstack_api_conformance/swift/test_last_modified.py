@@ -88,7 +88,7 @@ class Test(unittest2.TestCase):
 
         r = self.session.get(
             self.c_url +"/a",
-            headers={"if-modified-since":  "Sat, 03 Mar 1973 09:46:40 GMT"})
+            headers={"if-modified-since":  "Sat, 03 Mar 1973 09:46:41 GMT"})
 
         self.assertEqual(r.status_code, 304)
 

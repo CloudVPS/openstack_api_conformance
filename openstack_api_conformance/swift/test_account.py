@@ -71,9 +71,6 @@ class Test(unittest2.TestCase):
         response = self.session.get(self.url)
 
         self.assertDictContainsSubset( {
-                'accept-ranges': 'bytes, bytes',
-                'age': '0',
-                'connection': 'keep-alive',
                 'content-type': 'text/plain; charset=utf-8',
                 'x-account-bytes-used': '12',
                 'x-account-container-count': '1',
@@ -108,9 +105,6 @@ class Test(unittest2.TestCase):
             headers={'accept': 'application/json'})
 
         self.assertDictContainsSubset( {
-                'accept-ranges': 'bytes, bytes',
-                'age': '0',
-                'connection': 'keep-alive',
                 'content-type': 'application/json; charset=utf-8',
             }, response.headers);
 
@@ -165,9 +159,6 @@ class Test(unittest2.TestCase):
             headers={'accept': 'application/xml'})
 
         self.assertDictContainsSubset( {
-                'accept-ranges': 'bytes, bytes',
-                'age': '0',
-                'connection': 'keep-alive',
                 'content-type': 'application/xml; charset=utf-8',
             }, response.headers);
 

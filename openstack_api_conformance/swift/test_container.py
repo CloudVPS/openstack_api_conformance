@@ -61,9 +61,6 @@ class Test(unittest2.TestCase):
             headers={'X-Auth-Token': self.tokenId})
 
         self.assertDictContainsSubset( {
-                'accept-ranges': 'bytes, bytes',
-                'age': '0',
-                'connection': 'keep-alive',
                 'content-type': 'text/plain; charset=utf-8',
                 'x-container-object-count': '2',
                 'x-container-bytes-used': '12',
@@ -98,9 +95,6 @@ class Test(unittest2.TestCase):
             }
         )
         self.assertDictContainsSubset( {
-                'accept-ranges': 'bytes, bytes',
-                'age': '0',
-                'connection': 'keep-alive',
                 'content-type': 'text/plain; charset=utf-8',
                 'x-container-object-count': '2',
                 'x-container-bytes-used': '12',
@@ -150,9 +144,6 @@ class Test(unittest2.TestCase):
             }
         )
         self.assertDictContainsSubset( {
-                'accept-ranges': 'bytes, bytes',
-                'age': '0',
-                'connection': 'keep-alive',
                 'content-type': 'text/plain; charset=utf-8',
                 'x-container-object-count': '2',
                 'x-container-bytes-used': '12',
