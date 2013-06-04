@@ -95,6 +95,19 @@ class Test(unittest2.TestCase):
             "%s?temp_url_sig=%s&temp_url_expires=%i" % (url, sig, expires)
         ).raise_for_status()
 
+    def testGetFarFuture(self):
+        url = self.o_url
+        object_path = self.o_url[len(self.url):]
+
+        expires = int(time() + 86400*365)
+        hmac_body = 'GET\n%i\n%s' % (expires, object_path)
+
+        sig = hmac.new(self.key, hmac_body, sha1).hexdigest()
+
+        requests.get(
+            "%s?temp_url_sig=%s&temp_url_expires=%i" % (url, sig, expires)
+        ).raise_for_status()
+
 
     def testBrokenHash(self):
         url = self.o_url
@@ -127,3 +140,19 @@ class Test(unittest2.TestCase):
 
         self.assertEqual(response.status_code, 401)
         self.assertIn("Temp URL", response.text)
+
+    def testCache(self):
+        url = self.o_url
+        object_path = self.o_url[len(self.url):]
+
+        expires = int(time() + 60)
+        hmac_body = 'GET\n%i\n%s' % (expires, object_path)
+
+        sig = hmac.new(self.key, hmac_body, sha1).hexdigest()
+
+        requests.get(
+            "%s?temp_url_sig=%s&temp_url_expires=%i" % (url, sig, expires)
+        ).raise_for_status()
+
+        response = requests.get(url)
+        self.assertEqual(response.status_code, 401)
