@@ -55,14 +55,21 @@ class Test(unittest2.TestCase):
 
         if not ok:
             with self.assertRaises(Exception):
-                self.session.put(self.url + "/" + name).raise_for_status()
+                self.session.put(
+                    self.url + "/" + name,
+                    allow_redirects=False
+
+                ).raise_for_status()
 
                 r =self.session.get(
                     self.url + "/" + name,
                     headers={"accept": 'application/json'})
                 r.raise_for_status()
         else:
-            self.session.put(self.url + "/" + name).raise_for_status()
+            self.session.put(
+                self.url + "/" + name,
+                allow_redirects=False
+            ).raise_for_status()
 
             r =self.session.get(
                 self.url + "/" + name,
