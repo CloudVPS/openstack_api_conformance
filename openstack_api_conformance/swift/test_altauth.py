@@ -2,9 +2,7 @@ import json
 import openstack_api_conformance
 import requests
 from requests.auth import HTTPBasicAuth
-import socket
 import unittest2
-import urlparse
 import uuid
 
 class Test(unittest2.TestCase):

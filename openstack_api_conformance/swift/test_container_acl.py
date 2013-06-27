@@ -1,13 +1,9 @@
 import openstack_api_conformance
 import unittest2
 
-import socket
 import requests
 import json
-import urlparse
 import uuid
-import time, calendar
-import xml.etree.ElementTree as ET
 
 class Test(unittest2.TestCase):
     @classmethod
