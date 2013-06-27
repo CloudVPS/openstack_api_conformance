@@ -71,15 +71,15 @@ class Test(unittest2.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['swift']
-        if not cls.config:
-            cls.skipTest("Swift not configured")
-
-        if not cls.config['s3_access'] and not cls.config['s3_secret']:
-            cls.skipTest("S3 not configured")
-
         cls.url = cls.config['s3_base']
 
     def setUp(self):
+        if not self.config:
+            self.skipTest("Swift not configured")
+
+        if not self.config['s3_access'] and not self.config['s3_secret']:
+            self.skipTest("S3 not configured")
+
         self.container = '/' + str(uuid.uuid4())[:8]
         self.obj = self.container + '/ob'
 
@@ -95,7 +95,6 @@ class Test(unittest2.TestCase):
 
         sign_headers('PUT', '/' + url.split('/',3)[-1], headers)
 
-        print headers
         requests.put(url, headers=headers).raise_for_status()
 
     def testPutSigned(self):
@@ -108,7 +107,7 @@ class Test(unittest2.TestCase):
         key, sign = headers['Authorization'].split(" ")[-1].split(':',1)
         requests.put(
             url + "?AWSAccessKeyId=%s&Expires=%s&Signature=%s" %(
-                key, expires, sign
+                key, expires, urllib.quote(sign)
             ),
             headers=headers).raise_for_status()
 
@@ -122,6 +121,6 @@ class Test(unittest2.TestCase):
         key, sign = headers['Authorization'].split(" ")[-1].split(':',1)
         requests.put(
             url + "?AWSAccessKeyId=%s&Expires=%s&Signature=%s" %(
-                key, expires, sign
+                key, expires, urllib.quote(sign)
             ),
             headers=headers).raise_for_status()
