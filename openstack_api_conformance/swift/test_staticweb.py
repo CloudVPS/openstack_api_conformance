@@ -53,8 +53,6 @@ class Test(unittest2.TestCase):
         self.session.delete(self.c_url)
 
     def testWebIndex(self):
-        return
-
         self.session.put(
             self.c_url,
             headers={
@@ -83,7 +81,6 @@ class Test(unittest2.TestCase):
         self.assertEqual( response.text, '<!-- mah -->')
 
     def testWebListing(self):
-        return
         self.session.put(
             self.c_url,
             headers={
