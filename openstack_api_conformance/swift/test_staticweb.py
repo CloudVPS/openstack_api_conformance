@@ -88,7 +88,7 @@ class Test(unittest2.TestCase):
             self.c_url,
             headers={
                 'X-Container-Meta-Web-Listings': 'On',
-                'X-Container-Read': '.r:*,.rlistings'
+                'X-Container-Read': '.r:*'
             }).raise_for_status()
 
         self.session.put(
@@ -120,7 +120,7 @@ class Test(unittest2.TestCase):
         self.assertNotIn('index.html', response.text)
         self.assertIn('nested.html', response.text)
 
-    def testWebError(self):
+    def testWeb404Error(self):
         self.session.put(
             self.c_url,
             headers={
@@ -137,4 +137,23 @@ class Test(unittest2.TestCase):
         ).raise_for_status()
 
         response = requests.get(self.c_url + "/a")
+        self.assertEqual('<!-- meh -->', response.text)
+
+
+    def testWeb401Error(self):
+        self.session.put(
+            self.c_url,
+            headers={
+                'X-Container-Meta-Web-index': 'error.html',
+                'X-Container-Meta-Web-Error': 'error.html',
+            }).raise_for_status()
+
+        self.o_url = self.c_url + '/401error.html'
+        self.session.put(
+            self.o_url,
+            data="<!-- meh -->",
+            headers={"content-type": "text/html"}
+        ).raise_for_status()
+
+        response = requests.get(self.c_url)
         self.assertEqual('<!-- meh -->', response.text)
