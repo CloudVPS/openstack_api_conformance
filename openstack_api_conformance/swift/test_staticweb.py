@@ -80,6 +80,43 @@ class Test(unittest2.TestCase):
         response = requests.get(self.c_url + "/test/")
         self.assertEqual( response.text, '<!-- mah -->')
 
+
+
+    def testRedirectPseudofolder(self):
+        self.session.put(
+            self.c_url,
+            headers={
+                'X-Container-Meta-Web-Listings': 'On',
+                'X-Container-Read': '.r:*'
+            }).raise_for_status()
+
+        orig_url = self.o_url
+        self.o_url = orig_url + "/foo"
+
+        self.session.put(self.o_url, data="yeah!").raise_for_status()
+
+        response = requests.get(self.o_url,
+            headers={'Accept': 'text/html'},
+        )
+        self.assertEqual( response.text, 'yeah!')
+
+        response = requests.get(orig_url,
+            headers={'Accept': 'text/html'},
+            allow_redirects=False
+        )
+        self.assertEqual( response.status_code, 302)
+        self.assertEqual( response.headers['Location'],
+            orig_url[len(self.url):] + '/'
+        )
+
+        response = requests.get(
+            self.c_url + "/noexistement",
+            headers={'Accept': 'text/html'},
+            allow_redirects=False
+        )
+        self.assertEqual( response.status_code, 404)
+
+
     def testWebListing(self):
         self.session.put(
             self.c_url,
@@ -108,7 +145,6 @@ class Test(unittest2.TestCase):
             "text/html; charset=UTF-8")
         self.assertIn('index.html', response.text)
         self.assertNotIn('nested.html', response.text)
-
 
         response = requests.get(self.c_url + "/test/")
         self.assertEqual(
