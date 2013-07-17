@@ -48,7 +48,7 @@ class Test(unittest2.TestCase):
 
         response_time = calendar.timegm(response_date)
 
-        self.assertAlmostEqual(time.time(), response_time, delta=2)
+        self.assertAlmostEqual(time.time(), response_time, delta=5)
 
     def check_token(self, token):
         # verify the minimal data set.
@@ -66,7 +66,7 @@ class Test(unittest2.TestCase):
         expires = calendar.timegm(expires)
 
         # tokens are valid for 24 hours
-        self.assertAlmostEqual(time.time() + 3600*24, expires, delta=2)
+        self.assertAlmostEqual(time.time() + 3600*24, expires, delta=650)
 
         if self.config.release == 'folsom':
             self.assertRegexpMatches(
