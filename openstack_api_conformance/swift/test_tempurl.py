@@ -46,11 +46,11 @@ class Test(unittest2.TestCase):
         response = self.session.get(self.url + '/')
         self.key = response.headers.get('X-Account-Meta-Temp-URL-Key')
         if not self.key:
-            self.key = uuid.uuid4()
+            self.key = str(uuid.uuid4())
             self.session.post(self.url +'/',
                 headers={'X-Account-Meta-Temp-URL-Key': self.key})
 
-        self.c_url = self.url + '/' + str(uuid.uuid4())[:8]
+        self.c_url = self.url + '/tmpu-' + str(uuid.uuid4())[:8]
         self.o_url = self.c_url + '/ob'
 
         self.session.put(self.c_url).raise_for_status()
