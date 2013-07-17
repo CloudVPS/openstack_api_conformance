@@ -43,7 +43,7 @@ class Test(unittest2.TestCase):
     def setUp(self):
         self.session = requests.Session()
         self.session.headers.update({'X-Auth-Token': self.tokenId})
-        self.c_url = self.url + "/" + uuid.uuid4().hex
+        self.c_url = self.url + "/lm-" + uuid.uuid4().hex
         self.session.put(self.c_url)
 
     def tearDown(self):
@@ -73,7 +73,6 @@ class Test(unittest2.TestCase):
             data="foo",
             headers={'x-timestamp': '100000000.0'}
         ).raise_for_status()
-        ref_time = time.time()
         r = self.session.get(self.c_url +"/a")
         r.raise_for_status()
         self.assertEqual(r.headers['last-modified'], "Sat, 03 Mar 1973 09:46:40 GMT")
@@ -106,7 +105,6 @@ class Test(unittest2.TestCase):
             headers={'x-timestamp': '100000000.0'}
         ).raise_for_status()
 
-        ref_time = time.time()
         r = self.session.get(
             self.c_url +"/a",
             headers={"if-modified-since":  "Sat, 03 Mar 1973 09:46:40 JST"})

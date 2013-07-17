@@ -40,7 +40,7 @@ class Test(unittest2.TestCase):
 
 
         self.url = object_stores[0]
-        self.c_url = self.url + "/"  + uuid.uuid4().hex
+        self.c_url = self.url + "/alta-"  + uuid.uuid4().hex
 
         # make sure container exists
         self.session.put(self.c_url).raise_for_status()

@@ -43,7 +43,7 @@ class Test(unittest2.TestCase):
     def setUp(self):
         self.session = requests.Session()
         self.session.headers.update({'X-Auth-Token': self.tokenId})
-        self.c_url = self.url + "/" + uuid.uuid4().hex
+        self.c_url = self.url + "/ct-" + uuid.uuid4().hex
         self.session.put(self.c_url)
 
     def tearDown(self):

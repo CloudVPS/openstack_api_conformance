@@ -40,7 +40,7 @@ class Test(unittest2.TestCase):
     def setUp(self):
         self.session = requests.Session()
         self.session.headers.update({'X-Auth-Token': self.tokenId})
-        self.c_url = self.url + '/' + str(uuid.uuid4())[:8]
+        self.c_url = self.url + '/sw-' + str(uuid.uuid4())[:8]
         self.o_url = self.c_url + '/index.html'
 
         self.cleanup_urls = []
