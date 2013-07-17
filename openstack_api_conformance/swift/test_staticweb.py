@@ -80,7 +80,41 @@ class Test(unittest2.TestCase):
         response = requests.get(self.c_url + "/test/")
         self.assertEqual( response.text, '<!-- mah -->')
 
+    def testNonHtmlAccess(self):
+        self.session.put(
+            self.c_url,
+            headers={
+                'X-Container-Read': '.r:*,.rlistings'
+            }).raise_for_status()
 
+        response = self.session.get(
+            self.c_url,
+            headers={"Accept": "application/json"},
+            allow_redirects=False,
+        )
+
+        response.raise_for_status()
+        self.assertEqual(response.status_code, 200)
+
+
+    def testHtmlRedirect(self):
+        self.session.put(
+            self.c_url,
+            headers={
+                'X-Container-Read': '.r:*,.rlistings'
+            }).raise_for_status()
+
+        response = self.session.get(
+            self.c_url + "?stub",
+            headers={"Accept": "text/html"},
+            allow_redirects=False,
+        )
+
+        response.raise_for_status()
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual( response.headers['Location'],
+            self.c_url[len(self.url):] + '/?stub'
+        )
 
     def testRedirectPseudofolder(self):
         self.session.put(
@@ -152,6 +186,7 @@ class Test(unittest2.TestCase):
             "text/html; charset=UTF-8")
         self.assertNotIn('index.html', response.text)
         self.assertIn('nested.html', response.text)
+
 
     def testWeb404Error(self):
         self.session.put(
