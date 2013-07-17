@@ -59,7 +59,6 @@ def sign_headers(method, path, headers, expires=None):
 
     config = openstack_api_conformance.get_configuration()['swift']
 
-    print repr(string_to_sign)
     signature = base64.b64encode(hmac.new(
             str(config['s3_secret']),
             str(string_to_sign), sha).digest())
@@ -80,14 +79,20 @@ class Test(unittest2.TestCase):
         if not self.config['s3_access'] and not self.config['s3_secret']:
             self.skipTest("S3 not configured")
 
-        self.container = '/' + str(uuid.uuid4())[:8]
+        self.container = '/sw3-' + str(uuid.uuid4())[:8]
         self.obj = self.container + '/ob'
 
     def tearDown(self):
-        # self.session.delete(self.o_url)
-        # self.session.delete(self.c_url)
-        pass
+        headers = {}
+        url = self.url + self.obj
 
+        sign_headers('DELETE', '/' + url.split('/',3)[-1], headers)
+        requests.delete(url, headers=headers)
+
+        headers = {}
+        url = self.url + self.container
+        sign_headers('DELETE', '/' + url.split('/',3)[-1], headers)
+        requests.delete(url, headers=headers)
 
     def testPut(self):
         headers = {}
