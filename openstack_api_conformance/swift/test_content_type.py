@@ -80,13 +80,15 @@ class Test(unittest2.TestCase):
 
     def testContentDisposition(self):
         self.session.put(
-            self.c_url +"/a.xml",
+            self.c_url + "/a1.xml",
             data="foo",
-            headers={'Content-Disposition': 'attachment; filename="fname.ext"'}).raise_for_status()
-        r = self.session.get(self.c_url +"/a.xml")
+            headers={'Content-Disposition': 'Iets fouts'}).raise_for_status()
+        r = self.session.get(self.c_url + "/a1.xml")
         r.raise_for_status()
         print repr(r.headers)
-        self.assertEqual(r.headers['content-disposition'], 'Iets fouts')
+        self.assertEqual(
+            r.headers['content-disposition'],
+            'Iets fouts')
 
     def testCacheControl(self):
         self.session.put(
@@ -100,18 +102,18 @@ class Test(unittest2.TestCase):
 
     def testMetaAscii(self):
         self.session.put(
-            self.c_url +"/a.xml",
+            self.c_url + "/a.xml",
             data="foo",
             headers={'x-object-meta-foo': 'Iets fouts'}).raise_for_status()
-        r = self.session.get(self.c_url +"/a.xml")
+        r = self.session.get(self.c_url + "/a.xml")
         r.raise_for_status()
         self.assertEqual(r.headers['x-object-meta-foo'], 'Iets fouts')
 
     def testMetaUTF(self):
         self.session.put(
-            self.c_url +"/a.xml",
+            self.c_url + "/a.xml",
             data="foo",
             headers={'x-object-meta-\xDC': 'Iets fouts'}).raise_for_status()
-        r = self.session.get(self.c_url +"/a.xml")
+        r = self.session.get(self.c_url + "/a.xml")
         r.raise_for_status()
         self.assertEqual(r.headers['x-object-meta-\xDC'], 'Iets fouts')
