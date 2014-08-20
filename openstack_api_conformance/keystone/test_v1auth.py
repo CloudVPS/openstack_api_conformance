@@ -1,12 +1,11 @@
 import openstack_api_conformance
-import unittest2
 
 import requests
-import json
-import time
-import calendar
+import unittest2
+
 
 class Test(unittest2.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['keystone']

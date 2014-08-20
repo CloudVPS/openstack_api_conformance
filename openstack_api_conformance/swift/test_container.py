@@ -1,22 +1,23 @@
 import openstack_api_conformance
-import unittest2
 
-import socket
-import requests
 import json
-import urlparse
-import uuid
-import time, calendar
+import requests
+import time
+import calendar
+import unittest2
 import xml.etree.ElementTree as ET
 
+
 class Test(unittest2.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['swift']
         if not cls.config:
             cls.skipTest("Swift not configured")
 
-        response = requests.post(cls.config.auth_url + 'v2.0/tokens',
+        response = requests.post(
+            cls.config.auth_url + 'v2.0/tokens',
             data=json.dumps({
                 'auth': {
                     'passwordCredentials': {
@@ -26,7 +27,7 @@ class Test(unittest2.TestCase):
                     'tenantId': cls.config['tenantId'],
                 }
             }),
-            headers= {'content-type': 'application/json'}
+            headers={'content-type': 'application/json'}
         )
 
         token = response.json()
@@ -42,17 +43,22 @@ class Test(unittest2.TestCase):
         cls.headers = {'X-Auth-Token': cls.tokenId}
 
         requests.put(cls.url + "/foo", headers=cls.headers).raise_for_status()
-        requests.put(cls.url + "/foo/a", data="abcd", headers=cls.headers).raise_for_status()
-        requests.put(cls.url + "/foo/b", data="abcdabcd", headers=cls.headers).raise_for_status()
+        requests.put(cls.url + "/foo/a", data="abcd",
+                     headers=cls.headers).raise_for_status()
+        requests.put(cls.url + "/foo/b", data="abcdabcd",
+                     headers=cls.headers).raise_for_status()
 
         # PUT the container again to clear caches
         requests.put(cls.url + "/foo", headers=cls.headers).raise_for_status()
 
     @classmethod
     def tearDownClass(cls):
-        requests.delete(cls.url + "/foo/a", headers=cls.headers).raise_for_status()
-        requests.delete(cls.url + "/foo/b", headers=cls.headers).raise_for_status()
-        requests.delete(cls.url + "/foo", headers=cls.headers).raise_for_status()
+        requests.delete(
+            cls.url + "/foo/a", headers=cls.headers).raise_for_status()
+        requests.delete(
+            cls.url + "/foo/b", headers=cls.headers).raise_for_status()
+        requests.delete(
+            cls.url + "/foo", headers=cls.headers).raise_for_status()
         requests.post(cls.url, headers=cls.headers).raise_for_status()
 
     def testGet(self):
@@ -60,12 +66,12 @@ class Test(unittest2.TestCase):
             self.url + "/foo",
             headers={'X-Auth-Token': self.tokenId})
 
-        self.assertDictContainsSubset( {
-                'content-type': 'text/plain; charset=utf-8',
-                'x-container-object-count': '2',
-                'x-container-bytes-used': '12',
-                'content-type': 'text/plain; charset=utf-8',
-            }, response.headers);
+        self.assertDictContainsSubset({
+            'content-type': 'text/plain; charset=utf-8',
+            'x-container-object-count': '2',
+            'x-container-bytes-used': '12',
+            'content-type': 'text/plain; charset=utf-8',
+        }, response.headers)
 
         self.assertRegexpMatches(
             response.headers['x-timestamp'],
@@ -83,8 +89,7 @@ class Test(unittest2.TestCase):
 
         self.assertAlmostEqual(time.time(), response_time, delta=2)
 
-        self.assertEqual( response.text, 'a\nb\n')
-
+        self.assertEqual(response.text, 'a\nb\n')
 
     def testGetJson(self):
         response = requests.get(
@@ -94,12 +99,12 @@ class Test(unittest2.TestCase):
                 'Accept': 'application/json'
             }
         )
-        self.assertDictContainsSubset( {
-                'content-type': 'text/plain; charset=utf-8',
-                'x-container-object-count': '2',
-                'x-container-bytes-used': '12',
-                'content-type': 'application/json; charset=utf-8',
-            }, response.headers)
+        self.assertDictContainsSubset({
+            'content-type': 'text/plain; charset=utf-8',
+            'x-container-object-count': '2',
+            'x-container-bytes-used': '12',
+            'content-type': 'application/json; charset=utf-8',
+        }, response.headers)
 
         self.assertRegexpMatches(
             response.headers['x-timestamp'],
@@ -134,7 +139,6 @@ class Test(unittest2.TestCase):
         modified_date = calendar.timegm(response_date)
         self.assertAlmostEqual(time.time(), modified_date, delta=2)
 
-
     def testGetXml(self):
         response = requests.get(
             self.url + "/foo",
@@ -143,12 +147,12 @@ class Test(unittest2.TestCase):
                 'Accept': 'application/xml'
             }
         )
-        self.assertDictContainsSubset( {
-                'content-type': 'text/plain; charset=utf-8',
-                'x-container-object-count': '2',
-                'x-container-bytes-used': '12',
-                'content-type': 'application/xml; charset=utf-8',
-            }, response.headers)
+        self.assertDictContainsSubset({
+            'content-type': 'text/plain; charset=utf-8',
+            'x-container-object-count': '2',
+            'x-container-bytes-used': '12',
+            'content-type': 'application/xml; charset=utf-8',
+        }, response.headers)
 
         self.assertRegexpMatches(
             response.headers['x-timestamp'],
@@ -200,5 +204,3 @@ class Test(unittest2.TestCase):
         self.assertEqual(root[0][3].tag, 'content_type')
         self.assertEqual(root[0][3].text, 'application/octet-stream')
         self.assertEqual(root[0][4].tag, 'last_modified')
-
-

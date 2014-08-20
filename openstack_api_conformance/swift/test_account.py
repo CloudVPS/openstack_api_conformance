@@ -1,15 +1,15 @@
 import openstack_api_conformance
-import unittest2
 
-import socket
-import requests
+import calendar
 import json
-import urlparse
-import uuid
-import time, calendar
+import requests
+import time
+import unittest2
 import xml.etree.ElementTree as ET
 
+
 class Test(unittest2.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['swift']
@@ -17,17 +17,17 @@ class Test(unittest2.TestCase):
             cls.skipTest("Swift not configured")
 
         response = requests.post(cls.config.auth_url + 'v2.0/tokens',
-            data=json.dumps({
-                'auth': {
-                    'passwordCredentials': {
-                        'username': cls.config['username'],
-                        'password': cls.config['password'],
-                    },
-                    'tenantId': cls.config['tenantId'],
-                }
-            }),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps({
+                                     'auth': {
+                                         'passwordCredentials': {
+                                             'username': cls.config['username'],
+                                             'password': cls.config['password'],
+                                         },
+                                         'tenantId': cls.config['tenantId'],
+                                     }
+                                 }),
+                                 headers={'content-type': 'application/json'}
+                                 )
 
         token = response.json()
 
@@ -70,13 +70,13 @@ class Test(unittest2.TestCase):
     def testGet(self):
         response = self.session.get(self.url)
 
-        self.assertDictContainsSubset( {
-                'content-type': 'text/plain; charset=utf-8',
-                'x-account-bytes-used': '12',
-                'x-account-container-count': '1',
-                'x-account-object-count': '2',
-                'X-Account-Meta-foo': 'bar',
-            }, response.headers);
+        self.assertDictContainsSubset({
+            'content-type': 'text/plain; charset=utf-8',
+            'x-account-bytes-used': '12',
+            'x-account-container-count': '1',
+            'x-account-object-count': '2',
+            'X-Account-Meta-foo': 'bar',
+        }, response.headers)
 
         self.assertRegexpMatches(
             response.headers['x-timestamp'],
@@ -98,21 +98,18 @@ class Test(unittest2.TestCase):
             response.text,
             r"^foo$")
 
-
     def testGetJson(self):
         response = self.session.get(
             self.url,
             headers={'accept': 'application/json'})
 
-        self.assertDictContainsSubset( {
-                'content-type': 'application/json; charset=utf-8',
-            }, response.headers);
-
+        self.assertDictContainsSubset({
+            'content-type': 'application/json; charset=utf-8',
+        }, response.headers)
 
         self.assertRegexpMatches(
             response.headers['x-account-bytes-used'],
             r"^\d+$")
-
 
         self.assertRegexpMatches(
             response.headers['x-account-container-count'],
@@ -129,7 +126,6 @@ class Test(unittest2.TestCase):
         self.assertRegexpMatches(
             response.headers['x-trans-id'],
             r"^tx[0-9a-f]{32}$")
-
 
         response_date = time.strptime(
             response.headers['date'],
@@ -152,15 +148,14 @@ class Test(unittest2.TestCase):
         self.assertEqual(act_containers, 0)
         self.assertEqual(act_objects, 0)
 
-
     def testGetXML(self):
         response = self.session.get(
             self.url,
             headers={'accept': 'application/xml'})
 
-        self.assertDictContainsSubset( {
-                'content-type': 'application/xml; charset=utf-8',
-            }, response.headers);
+        self.assertDictContainsSubset({
+            'content-type': 'application/xml; charset=utf-8',
+        }, response.headers)
 
         root = ET.fromstring(response.text)
 
@@ -174,5 +169,3 @@ class Test(unittest2.TestCase):
                 ['bytes', 'count', 'name'])
             self.assertEqual(child.attrib, {})
             self.assertTrue(all(x.attrib == {} for x in child))
-
-

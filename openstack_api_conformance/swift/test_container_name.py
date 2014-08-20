@@ -1,22 +1,20 @@
 import openstack_api_conformance
+
+import json
+import requests
 import unittest2
 
-import socket
-import requests
-import json
-import urlparse
-import uuid
-import time, calendar
-import xml.etree.ElementTree as ET
 
 class Test(unittest2.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['swift']
         if not cls.config:
             cls.skipTest("Swift not configured")
 
-        response = requests.post(cls.config.auth_url + 'v2.0/tokens',
+        response = requests.post(
+            cls.config.auth_url + 'v2.0/tokens',
             data=json.dumps({
                 'auth': {
                     'passwordCredentials': {
@@ -26,7 +24,7 @@ class Test(unittest2.TestCase):
                     'tenantId': cls.config['tenantId'],
                 }
             }),
-            headers= {'content-type': 'application/json'}
+            headers={'content-type': 'application/json'}
         )
 
         token = response.json()
@@ -61,7 +59,7 @@ class Test(unittest2.TestCase):
 
                 ).raise_for_status()
 
-                r =self.session.get(
+                r = self.session.get(
                     self.url + "/" + name,
                     headers={"accept": 'application/json'})
                 r.raise_for_status()
@@ -71,7 +69,7 @@ class Test(unittest2.TestCase):
                 allow_redirects=False
             ).raise_for_status()
 
-            r =self.session.get(
+            r = self.session.get(
                 self.url + "/" + name,
                 headers={"accept": 'application/json'})
             r.raise_for_status()
@@ -81,8 +79,8 @@ class Test(unittest2.TestCase):
         self.check_name(u"\x2603")
 
     def testContainerNameLong(self):
-        self.check_name('X'*256)
-        self.check_name('X'*257, False)
+        self.check_name('X' * 256)
+        self.check_name('X' * 257, False)
 
     def testContainerControl(self):
         self.check_name('\x00')
@@ -92,5 +90,3 @@ class Test(unittest2.TestCase):
     def testContainerSpace(self):
         self.check_name(' ')
         self.check_name(' n')
-
-

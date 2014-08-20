@@ -5,14 +5,17 @@ import requests
 import json
 import uuid
 
+
 class Test(unittest2.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['swift']
         if not cls.config:
             cls.skipTest("Swift not configured")
 
-        response = requests.post(cls.config.auth_url + 'v2.0/tokens',
+        response = requests.post(
+            cls.config.auth_url + 'v2.0/tokens',
             data=json.dumps({
                 'auth': {
                     'passwordCredentials': {
@@ -22,7 +25,7 @@ class Test(unittest2.TestCase):
                     'tenantId': cls.config['tenantId'],
                 }
             }),
-            headers= {'content-type': 'application/json'}
+            headers={'content-type': 'application/json'}
         )
 
         token = response.json()
@@ -60,7 +63,6 @@ class Test(unittest2.TestCase):
                 'X-Container-Read': '.r:*'
             }).raise_for_status()
 
-
         self.session.put(
             self.o_url,
             data="<!-- meh -->",
@@ -76,9 +78,9 @@ class Test(unittest2.TestCase):
         ).raise_for_status()
 
         response = requests.get(self.c_url + "/")
-        self.assertEqual( response.text, '<!-- meh -->')
+        self.assertEqual(response.text, '<!-- meh -->')
         response = requests.get(self.c_url + "/test/")
-        self.assertEqual( response.text, '<!-- mah -->')
+        self.assertEqual(response.text, '<!-- mah -->')
 
     def testNonHtmlAccess(self):
         self.session.put(
@@ -96,7 +98,6 @@ class Test(unittest2.TestCase):
         response.raise_for_status()
         self.assertEqual(response.status_code, 200)
 
-
     def testHtmlRedirect(self):
         self.session.put(
             self.c_url,
@@ -112,9 +113,9 @@ class Test(unittest2.TestCase):
 
         response.raise_for_status()
         self.assertEqual(response.status_code, 302)
-        self.assertEqual( response.headers['Location'],
-            self.c_url[len(self.url):] + '/?stub'
-        )
+        self.assertEqual(response.headers['Location'],
+                         self.c_url[len(self.url):] + '/?stub'
+                         )
 
     def testRedirectPseudofolder(self):
         self.session.put(
@@ -130,26 +131,25 @@ class Test(unittest2.TestCase):
         self.session.put(self.o_url, data="yeah!").raise_for_status()
 
         response = requests.get(self.o_url,
-            headers={'Accept': 'text/html'},
-        )
-        self.assertEqual( response.text, 'yeah!')
+                                headers={'Accept': 'text/html'},
+                                )
+        self.assertEqual(response.text, 'yeah!')
 
         response = requests.get(orig_url,
-            headers={'Accept': 'text/html'},
-            allow_redirects=False
-        )
-        self.assertEqual( response.status_code, 302)
-        self.assertEqual( response.headers['Location'],
-            orig_url[len(self.url):] + '/'
-        )
+                                headers={'Accept': 'text/html'},
+                                allow_redirects=False
+                                )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers['Location'],
+                         orig_url[len(self.url):] + '/'
+                         )
 
         response = requests.get(
             self.c_url + "/noexistement",
             headers={'Accept': 'text/html'},
             allow_redirects=False
         )
-        self.assertEqual( response.status_code, 404)
-
+        self.assertEqual(response.status_code, 404)
 
     def testWebListing(self):
         self.session.put(
@@ -187,7 +187,6 @@ class Test(unittest2.TestCase):
         self.assertNotIn('index.html', response.text)
         self.assertIn('nested.html', response.text)
 
-
     def testWeb404Error(self):
         self.session.put(
             self.c_url,
@@ -206,7 +205,6 @@ class Test(unittest2.TestCase):
 
         response = requests.get(self.c_url + "/a")
         self.assertEqual('<!-- meh -->', response.text)
-
 
     def testWeb401Error(self):
         self.session.put(

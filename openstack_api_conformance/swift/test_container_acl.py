@@ -1,18 +1,21 @@
 import openstack_api_conformance
-import unittest2
 
-import requests
 import json
+import requests
+import unittest2
 import uuid
 
+
 class Test(unittest2.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['swift']
         if not cls.config:
             cls.skipTest("Swift not configured")
 
-        response = requests.post(cls.config.auth_url + 'v2.0/tokens',
+        response = requests.post(
+            cls.config.auth_url + 'v2.0/tokens',
             data=json.dumps({
                 'auth': {
                     'passwordCredentials': {
@@ -22,7 +25,7 @@ class Test(unittest2.TestCase):
                     'tenantId': cls.config['tenantId'],
                 }
             }),
-            headers= {'content-type': 'application/json'}
+            headers={'content-type': 'application/json'}
         )
 
         token = response.json()
@@ -85,7 +88,6 @@ class Test(unittest2.TestCase):
         response = requests.put(self.c_url)
         self.assertEqual(response.status_code, 401)
 
-
     def testPublicList(self):
         self.session.put(self.c_url, headers={
             'x-container-read': '.r:*,.rlistings'
@@ -114,11 +116,13 @@ class Test(unittest2.TestCase):
         response = requests.get(self.c_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text, "a\n")
-        self.assertEqual(response.headers['content-type'], "text/plain; charset=utf-8")
+        self.assertEqual(
+            response.headers['content-type'], "text/plain; charset=utf-8")
 
         response = requests.get(self.c_url, headers={
             'accept': 'application/json'
         })
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text[0], "[")
-        self.assertEqual(response.headers['content-type'], "application/json; charset=utf-8")
+        self.assertEqual(response.headers['content-type'],
+                         "application/json; charset=utf-8")

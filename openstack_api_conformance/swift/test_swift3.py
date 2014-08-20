@@ -1,13 +1,14 @@
 import openstack_api_conformance
 import unittest2
 
-import requests
-import hmac, sha
-import urllib
 import base64
-import uuid
-import time
 import email.utils
+import hmac
+import requests
+import sha
+import time
+import urllib
+import uuid
 
 
 def canonical_string(method, path, headers, expires=None):
@@ -49,24 +50,25 @@ def canonical_string(method, path, headers, expires=None):
 
     return buf
 
+
 def sign_headers(method, path, headers, expires=None):
 
     if 'Date' not in headers and not expires:
         headers['date'] = email.utils.formatdate(time.time())
-
 
     string_to_sign = canonical_string(method, path, headers, expires)
 
     config = openstack_api_conformance.get_configuration()['swift']
 
     signature = base64.b64encode(hmac.new(
-            str(config['s3_secret']),
-            str(string_to_sign), sha).digest())
+        str(config['s3_secret']),
+        str(string_to_sign), sha).digest())
 
     headers['Authorization'] = 'AWS %s:%s' % (config['s3_access'], signature)
 
 
 class Test(unittest2.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['swift']
@@ -86,19 +88,19 @@ class Test(unittest2.TestCase):
         headers = {}
         url = self.url + self.obj
 
-        sign_headers('DELETE', '/' + url.split('/',3)[-1], headers)
+        sign_headers('DELETE', '/' + url.split('/', 3)[-1], headers)
         requests.delete(url, headers=headers)
 
         headers = {}
         url = self.url + self.container
-        sign_headers('DELETE', '/' + url.split('/',3)[-1], headers)
+        sign_headers('DELETE', '/' + url.split('/', 3)[-1], headers)
         requests.delete(url, headers=headers)
 
     def testPut(self):
         headers = {}
         url = self.url + self.container
 
-        sign_headers('PUT', '/' + url.split('/',3)[-1], headers)
+        sign_headers('PUT', '/' + url.split('/', 3)[-1], headers)
 
         requests.put(url, headers=headers).raise_for_status()
 
@@ -107,11 +109,11 @@ class Test(unittest2.TestCase):
         expires = int(time.time() + 60)
         url = self.url + self.container
 
-        sign_headers('PUT', '/' + url.split('/',3)[-1], headers, expires)
+        sign_headers('PUT', '/' + url.split('/', 3)[-1], headers, expires)
 
-        key, sign = headers['Authorization'].split(" ")[-1].split(':',1)
+        key, sign = headers['Authorization'].split(" ")[-1].split(':', 1)
         requests.put(
-            url + "?AWSAccessKeyId=%s&Expires=%s&Signature=%s" %(
+            url + "?AWSAccessKeyId=%s&Expires=%s&Signature=%s" % (
                 key, expires, urllib.quote(sign)
             ),
             headers=headers).raise_for_status()
@@ -121,11 +123,11 @@ class Test(unittest2.TestCase):
         expires = int(time.time() + 3600)
         url = self.url + self.container
 
-        sign_headers('PUT', '/' + url.split('/',3)[-1], headers, expires)
+        sign_headers('PUT', '/' + url.split('/', 3)[-1], headers, expires)
 
-        key, sign = headers['Authorization'].split(" ")[-1].split(':',1)
+        key, sign = headers['Authorization'].split(" ")[-1].split(':', 1)
         requests.put(
-            url + "?AWSAccessKeyId=%s&Expires=%s&Signature=%s" %(
+            url + "?AWSAccessKeyId=%s&Expires=%s&Signature=%s" % (
                 key, expires, urllib.quote(sign)
             ),
             headers=headers).raise_for_status()

@@ -1,12 +1,14 @@
 import openstack_api_conformance
+
+import calendar
+import json
+import requests
+import time
 import unittest2
 
-import requests
-import json
-import time
-import calendar
 
 class Test(unittest2.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['keystone']
@@ -22,14 +24,15 @@ class Test(unittest2.TestCase):
         }
 
     def check_headers(self, headers):
-        self.assertDictContainsSubset( {
-        #        'transfer-encoding': 'chunked',
-                'content-type': 'application/json',
-                'vary': 'X-Auth-Token',
-            },
+        self.assertDictContainsSubset({
+            #        'transfer-encoding': 'chunked',
+            'content-type': 'application/json',
+            'vary': 'X-Auth-Token',
+        },
             headers)
 
-        header_names = set(headers.keys()) - set(("transfer-encoding", "content-length"))
+        header_names = set(headers.keys()) - \
+            set(("transfer-encoding", "content-length"))
 
         self.assertItemsEqual(
             header_names,
@@ -55,7 +58,7 @@ class Test(unittest2.TestCase):
         self.assertIn('id', token)
         self.assertIn('expires', token)
 
-        keys = set(token) - set([ 'tenant'])
+        keys = set(token) - set(['tenant'])
         if self.config.release == 'folsom':
             self.assertItemsEqual(keys, ('id', 'expires'))
         else:
@@ -66,7 +69,7 @@ class Test(unittest2.TestCase):
         expires = calendar.timegm(expires)
 
         # tokens are valid for 24 hours
-        self.assertAlmostEqual(time.time() + 3600*24, expires, delta=650)
+        self.assertAlmostEqual(time.time() + 3600 * 24, expires, delta=650)
 
         if self.config.release == 'folsom':
             self.assertRegexpMatches(
@@ -98,7 +101,7 @@ class Test(unittest2.TestCase):
 
     def check_catalog(self, catalog):
         if self.config.release == 'folsom' and not catalog:
-            return # folsom is inconsistent with empty catalogs.
+            return  # folsom is inconsistent with empty catalogs.
 
         self.assertIsInstance(catalog, list)
 
@@ -114,10 +117,11 @@ class Test(unittest2.TestCase):
             for endpoint in service['endpoints']:
                 self.assertItemsEqual(
                     endpoint,
-                    [u'adminURL', u'publicURL', u'internalURL', u'region', u'id']
+                    [u'adminURL', u'publicURL',
+                        u'internalURL', u'region', u'id']
                 )
 
-                for url in u'publicURL', u'internalURL': # u'adminURL'
+                for url in u'publicURL', u'internalURL':  # u'adminURL'
                     self.assertRegexpMatches(
                         endpoint[url],
                         r"^https?://([\d\.]+|[0-9a-z\.-]+\.[a-z\.]{2,6})(:\d+)?(/[A-Za-z0-9_\./]*)?$"
@@ -125,9 +129,9 @@ class Test(unittest2.TestCase):
 
     def test_unbound(self):
         response = requests.post(self.config.url + 'v2.0/tokens',
-            data=json.dumps(self.base_auth),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps(self.base_auth),
+                                 headers={'content-type': 'application/json'}
+                                 )
 
         self.check_headers(response.headers)
 
@@ -135,7 +139,7 @@ class Test(unittest2.TestCase):
 
         # Check we got exactly the information one would expect from an unbound
         # token.
-        self.assertItemsEqual(token, [u'access'] )
+        self.assertItemsEqual(token, [u'access'])
 
         if self.config.release == 'grizzly':
             self.assertItemsEqual(
@@ -154,17 +158,17 @@ class Test(unittest2.TestCase):
         self.assertFalse(token['access']['serviceCatalog'])
 
         # Unbound tokens should not have a tenant linked to the token
-        self.assertNotIn('tenant', token['access']['token'] )
+        self.assertNotIn('tenant', token['access']['token'])
 
         # Unbound tokens should not provide any roles
-        self.assertEqual([], token['access']['user']['roles'] )
+        self.assertEqual([], token['access']['user']['roles'])
 
     def test_with_tenantId(self):
         self.base_auth['auth']['tenantId'] = self.config.tenantId
         response = requests.post(self.config.url + 'v2.0/tokens',
-            data=json.dumps(self.base_auth),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps(self.base_auth),
+                                 headers={'content-type': 'application/json'}
+                                 )
 
         self.check_headers(response.headers)
 
@@ -172,7 +176,7 @@ class Test(unittest2.TestCase):
 
         # Check we got exactly the information one would expect from an unbound
         # token.
-        self.assertItemsEqual(token, [u'access'] )
+        self.assertItemsEqual(token, [u'access'])
 
         self.assertItemsEqual(
             token['access'],
@@ -186,14 +190,13 @@ class Test(unittest2.TestCase):
         self.assertEqual(
             token['access']['token']['tenant']['id'],
             self.config.tenantId)
-
 
     def test_with_tenantName(self):
         self.base_auth['auth']['tenantName'] = self.config.tenantName
         response = requests.post(self.config.url + 'v2.0/tokens',
-            data=json.dumps(self.base_auth),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps(self.base_auth),
+                                 headers={'content-type': 'application/json'}
+                                 )
 
         self.check_headers(response.headers)
 
@@ -201,8 +204,7 @@ class Test(unittest2.TestCase):
 
         # Check we got exactly the information one would expect from an unbound
         # token.
-        self.assertItemsEqual(token, [u'access'] )
-
+        self.assertItemsEqual(token, [u'access'])
 
         self.assertItemsEqual(
             token['access'],
@@ -217,14 +219,12 @@ class Test(unittest2.TestCase):
             token['access']['token']['tenant']['id'],
             self.config.tenantId)
 
-
     def test_with_unboundToken(self):
         response = requests.post(self.config.url + 'v2.0/tokens',
-            data=json.dumps(self.base_auth),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps(self.base_auth),
+                                 headers={'content-type': 'application/json'}
+                                 )
         token = response.json()
-
 
         auth = {
             'auth': {
@@ -235,23 +235,23 @@ class Test(unittest2.TestCase):
         }
 
         response = requests.post(self.config.url + 'v2.0/tokens',
-            data=json.dumps(auth),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps(auth),
+                                 headers={'content-type': 'application/json'}
+                                 )
         token = response.json()
 
         self.check_token(token['access']['token'])
         self.check_user(token['access']['user'])
         self.check_catalog(token['access']['serviceCatalog'])
 
-        self.assertNotIn( 'tenant', token['access']['token'])
+        self.assertNotIn('tenant', token['access']['token'])
 
         auth['auth']['tenantName'] = self.config.tenantName
 
         response = requests.post(self.config.url + 'v2.0/tokens',
-            data=json.dumps(auth),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps(auth),
+                                 headers={'content-type': 'application/json'}
+                                 )
         token = response.json()
 
         self.check_token(token['access']['token'])
@@ -262,13 +262,12 @@ class Test(unittest2.TestCase):
             token['access']['token']['tenant']['id'],
             self.config.tenantId)
 
-
     def test_with_boundToken(self):
         self.base_auth['auth']['tenantName'] = self.config.tenantName
         response = requests.post(self.config.url + 'v2.0/tokens',
-            data=json.dumps(self.base_auth),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps(self.base_auth),
+                                 headers={'content-type': 'application/json'}
+                                 )
         token = response.json()
 
         auth = {
@@ -280,23 +279,23 @@ class Test(unittest2.TestCase):
         }
 
         response = requests.post(self.config.url + 'v2.0/tokens',
-            data=json.dumps(auth),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps(auth),
+                                 headers={'content-type': 'application/json'}
+                                 )
         token = response.json()
 
         self.check_token(token['access']['token'])
         self.check_user(token['access']['user'])
         self.check_catalog(token['access']['serviceCatalog'])
 
-        self.assertNotIn( 'tenant', token['access']['token'])
+        self.assertNotIn('tenant', token['access']['token'])
 
         auth['auth']['tenantName'] = self.config.tenantName
 
         response = requests.post(self.config.url + 'v2.0/tokens',
-            data=json.dumps(auth),
-            headers= {'content-type': 'application/json'}
-        )
+                                 data=json.dumps(auth),
+                                 headers={'content-type': 'application/json'}
+                                 )
         token = response.json()
 
         self.check_token(token['access']['token'])

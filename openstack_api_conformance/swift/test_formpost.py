@@ -1,21 +1,24 @@
 import openstack_api_conformance
-import unittest2
 
+from hashlib import sha1
+from time import time
 import hmac
 import json
 import requests
+import unittest2
 import uuid
-from hashlib import sha1
-from time import time
+
 
 class Test(unittest2.TestCase):
+
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['swift']
         if not cls.config:
             cls.skipTest("Swift not configured")
 
-        response = requests.post(cls.config.auth_url + 'v2.0/tokens',
+        response = requests.post(
+            cls.config.auth_url + 'v2.0/tokens',
             data=json.dumps({
                 'auth': {
                     'passwordCredentials': {
@@ -25,7 +28,7 @@ class Test(unittest2.TestCase):
                     'tenantId': cls.config['tenantId'],
                 }
             }),
-            headers= {'content-type': 'application/json'}
+            headers={'content-type': 'application/json'}
         )
 
         token = response.json()
@@ -47,8 +50,9 @@ class Test(unittest2.TestCase):
         self.key = response.headers.get('X-Account-Meta-Temp-URL-Key')
         if not self.key:
             self.key = str(uuid.uuid4())
-            self.session.post(self.url +'/',
-                headers={'X-Account-Meta-Temp-URL-Key': self.key})
+            self.session.post(self.url + '/',
+                              headers={
+                                  'X-Account-Meta-Temp-URL-Key': self.key})
 
         self.c_name = 'fp-' + str(uuid.uuid4())[:8]
         self.c_url = self.url + '/' + self.c_name
@@ -68,8 +72,9 @@ class Test(unittest2.TestCase):
         expires = int(time() + 600)
 
         hmac_body = '%s\n%s\n%s\n%s\n%s' % (path, redirect,
-            max_file_size, max_file_count, expires)
-        signature = hmac.new(self.key , hmac_body, sha1).hexdigest()
+                                            max_file_size, max_file_count,
+                                            expires)
+        signature = hmac.new(self.key, hmac_body, sha1).hexdigest()
 
         data = {
             "redirect": redirect,
@@ -80,9 +85,9 @@ class Test(unittest2.TestCase):
         }
 
         response = requests.post(self.c_url,
-            files={"file": ("test.xml", "<xml />")},
-            data=data,
-            allow_redirects=False)
+                                 files={"file": ("test.xml", "<xml />")},
+                                 data=data,
+                                 allow_redirects=False)
 
         self.o_url = self.c_url + '/test.xml'
 
@@ -101,8 +106,9 @@ class Test(unittest2.TestCase):
         expires = int(time() + 600)
 
         hmac_body = '%s\n%s\n%s\n%s\n%s' % (path, redirect,
-            max_file_size, max_file_count, expires)
-        signature = hmac.new(self.key , hmac_body, sha1).hexdigest()
+                                            max_file_size, max_file_count,
+                                            expires)
+        signature = hmac.new(self.key, hmac_body, sha1).hexdigest()
 
         data = {
             "redirect": redirect,
@@ -113,9 +119,9 @@ class Test(unittest2.TestCase):
         }
 
         response = requests.post(self.c_url,
-            files={"file": ("test.xml", "<xml />")},
-            data=data,
-            allow_redirects=False)
+                                 files={"file": ("test.xml", "<xml />")},
+                                 data=data,
+                                 allow_redirects=False)
 
         self.o_url = self.c_url + '/test.xml'
 
@@ -134,8 +140,9 @@ class Test(unittest2.TestCase):
         expires = int(time() - 600)
 
         hmac_body = '%s\n%s\n%s\n%s\n%s' % (path, redirect,
-            max_file_size, max_file_count, expires)
-        signature = hmac.new(self.key , hmac_body, sha1).hexdigest()
+                                            max_file_size, max_file_count,
+                                            expires)
+        signature = hmac.new(self.key, hmac_body, sha1).hexdigest()
 
         data = {
             "redirect": redirect,
@@ -146,9 +153,9 @@ class Test(unittest2.TestCase):
         }
 
         response = requests.post(self.c_url,
-            files={"file": ("test.xml", "<xml />")},
-            data=data,
-            allow_redirects=False)
+                                 files={"file": ("test.xml", "<xml />")},
+                                 data=data,
+                                 allow_redirects=False)
 
         self.o_url = self.c_url + '/test.xml'
 
@@ -156,5 +163,3 @@ class Test(unittest2.TestCase):
         self.assertEquals(
             response.headers['Location'],
             redirect + "?status=401&message=form%20expired")
-
-
