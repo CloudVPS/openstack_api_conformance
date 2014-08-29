@@ -82,7 +82,7 @@ class Test(unittest2.TestCase):
             self.skipTest("S3 not configured")
 
         self.container = '/sw3-' + str(uuid.uuid4())[:8]
-        self.obj = self.container + '/ob'
+        self.obj = self.container + '/ob-' + str(uuid.uuid4())[:8]
 
     def tearDown(self):
         headers = {}
@@ -99,10 +99,25 @@ class Test(unittest2.TestCase):
     def testPut(self):
         headers = {}
         url = self.url + self.container
-
         sign_headers('PUT', '/' + url.split('/', 3)[-1], headers)
-
         requests.put(url, headers=headers).raise_for_status()
+
+        headers = {
+            'Cache-Control': 'foo',
+            'Content-Disposition': 'bar',
+            'Content-Type': "baz"
+        }
+        url = self.url + self.obj
+        sign_headers('PUT', '/' + url.split('/', 3)[-1], headers)
+        requests.put(url, headers=headers).raise_for_status()
+
+        headers = {}
+        sign_headers('GET', '/' + url.split('/', 3)[-1], headers)
+        result = requests.get(url, headers=headers)
+        result.raise_for_status()
+        self.assertEqual(result.headers['Content-Type'], 'baz')
+        self.assertEqual(result.headers['Cache-Control'], 'foo')
+        self.assertEqual(result.headers['Content-Disposition'], 'bar')
 
     def testPutSigned(self):
         headers = {}
@@ -131,3 +146,20 @@ class Test(unittest2.TestCase):
                 key, expires, urllib.quote(sign)
             ),
             headers=headers).raise_for_status()
+
+
+    def testPutSignedPast(self):
+        headers = {}
+        expires = int(time.time() - 3600)
+        url = self.url + self.container
+
+        sign_headers('PUT', '/' + url.split('/', 3)[-1], headers, expires)
+
+        key, sign = headers['Authorization'].split(" ")[-1].split(':', 1)
+        result = requests.put(
+            url + "?AWSAccessKeyId=%s&Expires=%s&Signature=%s" % (
+                key, expires, urllib.quote(sign)
+            ),
+            headers=headers)
+
+        self.assertEqual(result.status_code, 403)
