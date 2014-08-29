@@ -71,14 +71,9 @@ class Test(unittest2.TestCase):
         # tokens are valid for 24 hours
         self.assertAlmostEqual(time.time() + 3600 * 24, expires, delta=650)
 
-        if self.config.release == 'folsom':
-            self.assertRegexpMatches(
-                token['id'],
-                r"^[a-f0-9]{32}$")
-        else:
-            self.assertRegexpMatches(
-                token['id'],
-                r"^[a-zA-Z0-9+-]{100,}={0,3}$")
+	self.assertRegexpMatches(
+	    token['id'],
+	    r"^[a-f0-9]{32}$")
 
         if 'tenant' in token:
             self.assertEqual(token['tenant']['id'], self.config.tenantId)
@@ -141,7 +136,12 @@ class Test(unittest2.TestCase):
         # token.
         self.assertItemsEqual(token, [u'access'])
 
-        if self.config.release == 'grizzly':
+	
+        if self.config.release == 'icehouse':
+            self.assertItemsEqual(
+                token['access'],
+                [u'metadata', u'serviceCatalog', u'token', u'user'])
+        elif self.config.release == 'grizzly':
             self.assertItemsEqual(
                 token['access'],
                 [u'token', u'user', u'serviceCatalog', u'metadata'])
