@@ -3,6 +3,7 @@ import unittest2
 
 import base64
 import email.utils
+import json
 import hmac
 import requests
 import sha
@@ -72,7 +73,35 @@ class Test(unittest2.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.config = openstack_api_conformance.get_configuration()['swift']
+        if not cls.config:
+            cls.skipTest("Swift not configured")
+
         cls.url = cls.config['s3_base']
+
+        response = requests.post(
+            cls.config.auth_url + 'v2.0/tokens',
+            data=json.dumps({
+                'auth': {
+                    'passwordCredentials': {
+                        'username': cls.config['username'],
+                        'password': cls.config['password'],
+                    },
+                    'tenantId': cls.config['tenantId'],
+                }
+            }),
+            headers={'content-type': 'application/json'}
+        )
+
+        token = response.json()
+
+        object_stores = [
+            service['endpoints'][0]['publicURL']
+            for service in token['access']['serviceCatalog']
+            if service['type'] == 'object-store'
+        ]
+
+        cls.swift_url = object_stores[0]
+        cls.tokenId = token['access']['token']['id']
 
     def setUp(self):
         if not self.config:
@@ -81,8 +110,10 @@ class Test(unittest2.TestCase):
         if not self.config['s3_access'] and not self.config['s3_secret']:
             self.skipTest("S3 not configured")
 
-        self.container = '/sw3-' + str(uuid.uuid4())[:8]
-        self.obj = self.container + '/ob-' + str(uuid.uuid4())[:8]
+        self.container_name = 'sw3-' + str(uuid.uuid4())[:8]
+        self.obj_name = 'ob-' + str(uuid.uuid4())[:8]
+        self.container = '/%s' % self.container_name
+        self.obj = '/%s/%s' % (self.container_name, self.obj_name)
 
     def tearDown(self):
         headers = {}
@@ -111,13 +142,35 @@ class Test(unittest2.TestCase):
         sign_headers('PUT', '/' + url.split('/', 3)[-1], headers)
         requests.put(url, headers=headers).raise_for_status()
 
-        headers = {}
-        sign_headers('GET', '/' + url.split('/', 3)[-1], headers)
-        result = requests.get(url, headers=headers)
+        result = requests.get(self.swift_url + self.obj,
+                              headers={'x-auth-token': self.tokenId})
         result.raise_for_status()
         self.assertEqual(result.headers['Content-Type'], 'baz')
         self.assertEqual(result.headers['Cache-Control'], 'foo')
         self.assertEqual(result.headers['Content-Disposition'], 'bar')
+
+    def testPutCopy(self):
+        headers = {}
+        url = self.url + self.container
+        sign_headers('PUT', '/' + url.split('/', 3)[-1], headers)
+        requests.put(url, headers=headers).raise_for_status()
+
+        headers = {}
+        url = self.url + self.obj
+        sign_headers('PUT', '/' + url.split('/', 3)[-1], headers)
+        requests.put(url, headers=headers).raise_for_status()
+
+        headers = {'X-AMZ-COPY-SOURCe': self.obj}
+        url = self.url + self.obj + "-1"
+        sign_headers('PUT', '/' + url.split('/', 3)[-1], headers)
+        response = requests.put(url, headers=headers)
+        response.raise_for_status()
+
+        self.assertIn('<CopyObjectResult>', response.content)
+
+        result = requests.get(self.swift_url + self.obj + "-1",
+                              headers={'x-auth-token': self.tokenId})
+        result.raise_for_status()
 
     def testPutSigned(self):
         headers = {}
@@ -146,7 +199,6 @@ class Test(unittest2.TestCase):
                 key, expires, urllib.quote(sign)
             ),
             headers=headers).raise_for_status()
-
 
     def testPutSignedPast(self):
         headers = {}
