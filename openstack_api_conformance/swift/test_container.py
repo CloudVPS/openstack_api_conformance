@@ -68,26 +68,10 @@ class Test(unittest2.TestCase):
 
         self.assertDictContainsSubset({
             'content-type': 'text/plain; charset=utf-8',
-            'x-container-object-count': '2',
-            'x-container-bytes-used': '12',
             'content-type': 'text/plain; charset=utf-8',
         }, response.headers)
 
-        self.assertRegexpMatches(
-            response.headers['x-timestamp'],
-            r"^\d+\.\d+$")
-
-        self.assertRegexpMatches(
-            response.headers['x-trans-id'],
-            r"^tx[0-9a-f]{32}$")
-
-        response_date = time.strptime(
-            response.headers['date'],
-            '%a, %d %b %Y %H:%M:%S GMT')
-
-        response_time = calendar.timegm(response_date)
-
-        self.assertAlmostEqual(time.time(), response_time, delta=2)
+        self.checkCommonHeaders(response)
 
         self.assertEqual(response.text, 'a\nb\n')
 
@@ -101,26 +85,10 @@ class Test(unittest2.TestCase):
         )
         self.assertDictContainsSubset({
             'content-type': 'text/plain; charset=utf-8',
-            'x-container-object-count': '2',
-            'x-container-bytes-used': '12',
             'content-type': 'application/json; charset=utf-8',
         }, response.headers)
 
-        self.assertRegexpMatches(
-            response.headers['x-timestamp'],
-            r"^\d+\.\d+$")
-
-        self.assertRegexpMatches(
-            response.headers['x-trans-id'],
-            r"^tx[0-9a-f]{32}$")
-
-        response_date = time.strptime(
-            response.headers['date'],
-            '%a, %d %b %Y %H:%M:%S GMT')
-
-        response_time = calendar.timegm(response_date)
-
-        self.assertAlmostEqual(time.time(), response_time, delta=2)
+        self.checkCommonHeaders(response)
 
         file_list = response.json()
 
@@ -136,7 +104,7 @@ class Test(unittest2.TestCase):
         modified_date = time.strptime(
             file_list[0]['last_modified'].split('.', 1)[0],
             '%Y-%m-%dT%H:%M:%S')
-        modified_date = calendar.timegm(response_date)
+        modified_date = calendar.timegm(modified_date)
         self.assertAlmostEqual(time.time(), modified_date, delta=2)
 
     def testGetXml(self):
@@ -149,26 +117,10 @@ class Test(unittest2.TestCase):
         )
         self.assertDictContainsSubset({
             'content-type': 'text/plain; charset=utf-8',
-            'x-container-object-count': '2',
-            'x-container-bytes-used': '12',
             'content-type': 'application/xml; charset=utf-8',
         }, response.headers)
 
-        self.assertRegexpMatches(
-            response.headers['x-timestamp'],
-            r"^\d+\.\d+$")
-
-        self.assertRegexpMatches(
-            response.headers['x-trans-id'],
-            r"^tx[0-9a-f]{32}$")
-
-        response_date = time.strptime(
-            response.headers['date'],
-            '%a, %d %b %Y %H:%M:%S GMT')
-
-        response_time = calendar.timegm(response_date)
-
-        self.assertAlmostEqual(time.time(), response_time, delta=2)
+        self.checkCommonHeaders(response)
 
         # <?xml version="1.0" encoding="UTF-8"?>
         # <container name="foo">
@@ -204,3 +156,25 @@ class Test(unittest2.TestCase):
         self.assertEqual(root[0][3].tag, 'content_type')
         self.assertEqual(root[0][3].text, 'application/octet-stream')
         self.assertEqual(root[0][4].tag, 'last_modified')
+
+    def checkCommonHeaders(self, response):
+        self.assertDictContainsSubset({
+            'x-container-object-count': '2',
+            'x-container-bytes-used': '12',
+        }, response.headers)
+
+        self.assertRegexpMatches(
+            response.headers['x-timestamp'],
+            r"^\d+\.\d+$")
+
+        self.assertRegexpMatches(
+            response.headers['x-trans-id'],
+            r"^tx[0-9a-f]{20,32}(-[0-9a-f]{10})?$")
+
+        response_date = time.strptime(
+            response.headers['date'],
+            '%a, %d %b %Y %H:%M:%S GMT')
+
+        response_time = calendar.timegm(response_date)
+
+        self.assertAlmostEqual(time.time(), response_time, delta=10)
